@@ -1,183 +1,31 @@
-<!DOCTYPE html>
-<html class="light" lang="ko">
+<!doctype html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>BusinessChat - Realtime Workspace</title>
-
-  <!-- Tailwind CDN (UI 참고용, 외부 의존 최소화 유지) -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
-  <meta name="theme-color" content="#4A90E2"/>
-  <link rel="manifest" href="manifest.json"/>
-
-  <style>
-    .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-  </style>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#4A90E2",
-            "secondary": "#F7F7F7",
-            "accent": "#7ED321",
-            "background-light": "#FFFFFF",
-            "background-dark": "#1a1a1a",
-            "text-primary": "#333333",
-            "text-secondary": "#666666",
-            "dark-text-primary": "#E0E0E0",
-            "dark-text-secondary": "#A0A0A0"
-          },
-          fontFamily: { "display": ["Inter", "sans-serif"] },
-          borderRadius: { "DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px" }
-        },
-      },
-    }
-  </script>
-
-  <link rel="stylesheet" href="css/styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Realtime Chat</title>
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display">
-<!-- Top Bar -->
-<header class="w-full border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex justify-between items-center">
-  <div class="flex items-center gap-2">
-    <div class="flex items-center justify-center bg-primary text-white size-10 rounded-lg"><span class="text-xl font-bold">B</span></div>
-    <div>
-      <h1 class="text-text-primary dark:text-dark-text-primary text-lg font-semibold">BusinessChat</h1>
-      <p class="text-text-secondary dark:text-dark-text-secondary text-sm">Workspace</p>
+<body>
+  <header class="topbar">
+    <div class="brand">Simple Chat</div>
+    <div class="nick-area">
+      <input id="nickname" class="nick-input" placeholder="닉네임(최대 20자)" maxlength="20" />
+      <button id="save-nick" class="btn">저장</button>
     </div>
-  </div>
-  <div class="flex items-center gap-2">
-    <button id="btn-request-notify" class="px-3 py-2 rounded-lg bg-primary text-white text-sm">웹 푸시 허용</button>
-    <div id="auth-area" class="flex items-center gap-2">
-      <!-- 로그인 전 -->
-      <button id="btn-open-auth" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm">로그인</button>
-      <!-- 로그인 후 -->
-      <div id="user-chip" class="hidden items-center gap-2">
-        <span id="user-email" class="text-sm"></span>
-        <button id="btn-logout" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm">로그아웃</button>
-      </div>
-    </div>
-  </div>
-</header>
+  </header>
 
-<div class="flex h-[calc(100vh-60px)] w-full antialiased text-text-primary dark:text-dark-text-primary">
-  <!-- Left: Rooms -->
-  <aside class="flex flex-col w-96 bg-secondary dark:bg-background-dark border-r border-gray-200 dark:border-gray-700">
-    <div class="p-4">
-      <label class="flex flex-col min-w-40 h-12 w-full">
-        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-          <div class="text-text-secondary dark:text-dark-text-secondary flex border-none bg-gray-100 dark:bg-gray-700 items-center justify-center pl-4 rounded-l-lg border-r-0">
-            <span class="material-symbols-outlined">search</span>
-          </div>
-          <input id="room-search" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-text-primary dark:text-dark-text-primary focus:outline-0 focus:ring-0 border-none bg-gray-100 dark:bg-gray-700 focus:border-none h-full placeholder:text-text-secondary dark:placeholder:text-dark-text-secondary pl-2 text-base" placeholder="Search chats..." />
-        </div>
-      </label>
-    </div>
-
-    <div id="room-list" class="flex-1 overflow-y-auto">
-      <!-- 채팅방 목록 실시간 렌더링 -->
-    </div>
-
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-      <div class="flex gap-2">
-        <input id="new-room-name" type="text" class="form-input flex-1" placeholder="새 채팅방 이름" />
-        <button id="btn-create-room" class="rounded-lg px-3 bg-primary text-white">생성</button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Center: Chat -->
-  <main class="flex-1 flex flex-col bg-background-light dark:bg-background-dark">
-    <div id="chat-header" class="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-4 flex-1">
-        <div class="relative">
-          <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-200 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-bold text-lg">CH</div>
-        </div>
-        <div class="flex flex-col">
-          <h2 id="active-room-title" class="text-lg font-semibold text-text-primary dark:text-dark-text-primary">채팅방을 선택하세요</h2>
-          <p class="text-sm text-accent" id="active-room-meta"></p>
-        </div>
-      </div>
-    </div>
-
-    <div id="message-feed" class="flex-1 p-6 overflow-y-auto space-y-6">
-      <div class="flex flex-col items-center justify-center h-full text-center text-text-secondary dark:text-dark-text-secondary" id="empty-state">
-        <span class="material-symbols-outlined text-6xl mb-4">chat_bubble_outline</span>
-        <h3 class="text-xl font-semibold">Select a chat to start messaging</h3>
-        <p class="max-w-xs">You can start a new conversation by creating or selecting a room.</p>
-      </div>
-    </div>
-
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
-        <input id="message-input" class="flex-1 bg-transparent border-none focus:ring-0 text-text-primary dark:text-dark-text-primary placeholder:text-text-secondary dark:placeholder:text-dark-text-secondary" placeholder="Type a message..." type="text"/>
-        <button id="btn-send-message" class="p-2 rounded-full bg-primary text-white hover:bg-primary/90">
-          <span class="material-symbols-outlined">send</span>
-        </button>
-      </div>
-    </div>
+  <main class="chat-wrap">
+    <ul id="messages" class="messages" aria-live="polite"></ul>
   </main>
 
-  <!-- Right: Notes & Scheduler -->
-  <aside class="w-96 bg-secondary dark:bg-background-dark border-l border-gray-200 dark:border-gray-700 flex flex-col">
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-semibold text-text-primary dark:text-dark-text-primary">메모 & 알림</h3>
-    </div>
+  <footer class="inputbar">
+    <input id="message" class="msg-input" placeholder="메시지를 입력하세요" maxlength="1000" />
+    <button id="send" class="btn primary">전송</button>
+  </footer>
 
-    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-      <h4 class="font-semibold mb-2">새 메모</h4>
-      <div class="space-y-2">
-        <input id="note-title" class="form-input w-full" placeholder="제목" />
-        <textarea id="note-body" class="form-textarea w-full" rows="3" placeholder="내용"></textarea>
-        <div class="flex items-center gap-2">
-          <input id="note-share-emails" class="form-input flex-1" placeholder="공유 이메일(쉼표로 구분)" />
-          <button id="btn-add-note" class="px-3 py-2 rounded-lg bg-primary text-white text-sm">추가</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto" id="note-list">
-      <!-- 메모 목록 렌더링 -->
-    </div>
-
-    <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-      <h4 class="font-semibold mb-2">알림 스케줄러</h4>
-      <div class="grid grid-cols-2 gap-2">
-        <input id="sched-emoji" class="form-input" placeholder="이모지(예: 🔔)" />
-        <input id="sched-interval-min" class="form-input" type="number" min="1" placeholder="간격(분)" />
-        <input id="sched-message" class="col-span-2 form-input" placeholder="알림 메시지" />
-        <button id="btn-save-schedule" class="col-span-2 px-3 py-2 rounded-lg bg-primary text-white text-sm">스케줄 저장</button>
-      </div>
-      <p class="text-xs text-text-secondary dark:text-dark-text-secondary mt-2">설정 후 브라우저에서 웹 푸시 권한 허용 필요</p>
-      <div id="schedule-current" class="text-sm mt-2"></div>
-    </div>
-  </aside>
-</div>
-
-<!-- Auth Modal -->
-<div id="auth-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
-  <div class="bg-white dark:bg-gray-900 rounded-xl max-w-md w-full p-6 space-y-3">
-    <h3 class="text-lg font-semibold">로그인 / 회원가입</h3>
-    <input id="auth-email" class="form-input w-full" placeholder="이메일" />
-    <input id="auth-password" class="form-input w-full" type="password" placeholder="비밀번호(6자 이상)" />
-    <div class="flex gap-2">
-      <button id="btn-signup" class="flex-1 px-3 py-2 rounded-lg bg-primary text-white">회원가입</button>
-      <button id="btn-login" class="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800">로그인</button>
-    </div>
-    <button id="btn-close-auth" class="w-full px-3 py-2 rounded-lg">닫기</button>
-  </div>
-</div>
-
-<!-- Firebase SDKs (모듈식 v10+) -->
-<script type="module" src="js/firebase_bootstrap.js"></script>
-<script type="module" src="js/auth_module.js"></script>
-<script type="module" src="js/messaging_module.js"></script>
-<script type="module" src="js/chat_module.js"></script>
-<script type="module" src="js/notes_module.js"></script>
-<script type="module" src="js/scheduler_module.js"></script>
+  <!-- Firebase 초기화 & 채팅 로직 -->
+  <script type="module" src="./js/firebase_bootstrap.js"></script>
+  <script type="module" src="./js/chat.js"></script>
 </body>
 </html>
