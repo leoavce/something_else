@@ -1,8 +1,42 @@
-/* 기본 레이아웃 보조 스타일 */
-#room-list .room-item { cursor:pointer; }
-#room-list .room-item.active { background: rgba(74,144,226,0.12); border-left:4px solid #4A90E2; }
-#message-feed .msg-bubble { max-width: 70%; }
-#message-feed .msg-me { background:#4A90E2; color:#fff; border-radius: 0.75rem; border-bottom-right-radius: 0.25rem; }
-#message-feed .msg-other { background:#f3f4f6; color:#111827; border-radius: 0.75rem; border-bottom-left-radius: 0.25rem; }
+* { box-sizing: border-box; }
+:root {
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --text: #222;
+  --muted: #778;
+  --primary: #2563eb;
+  --border: #e5e7eb;
+}
+html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); background: var(--bg); }
 
-.hidden { display:none; }
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; background: var(--card); border-bottom: 1px solid var(--border);
+}
+.brand { font-weight: 700; }
+.nick-area { display: flex; gap: 8px; align-items: center; }
+.nick-input, .msg-input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff;
+}
+.btn {
+  padding: 9px 14px; border: 1px solid var(--border); background: #fff; border-radius: 10px; cursor: pointer;
+}
+.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.chat-wrap { height: calc(100vh - 120px); overflow: auto; padding: 12px; }
+.messages { list-style: none; padding: 0; margin: 0 auto; max-width: 860px; display: flex; flex-direction: column; gap: 8px; }
+.msg {
+  display: inline-flex; max-width: 80%; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.row { display: flex; gap: 8px; align-items: flex-end; }
+.me { justify-content: flex-end; }
+.me .msg { background: #eef4ff; border-color: #d5e2ff; }
+
+.inputbar {
+  position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px;
+  padding: 10px; background: var(--card); border-top: 1px solid var(--border);
+}
