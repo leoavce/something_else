@@ -1,0 +1,5 @@
+{
+  "env": { "es2022": true, "node": true },
+  "extends": ["eslint:recommended", "google"],
+  "rules": { "quotes": ["error", "single"], "max-len": ["error", 120] }
+}
