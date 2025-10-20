@@ -4,9 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simple Realtime Chat</title>
+  <!-- favicon (404 방지) -->
+  <link rel="icon" href="./icons/icon-192.png" type="image/png" />
   <link rel="stylesheet" href="./css/styles.css" />
+  <style>
+    .diag {background:#111;color:#eee;padding:6px 10px;font:12px/1.4 system-ui;display:flex;gap:12px;flex-wrap:wrap}
+    .diag b{color:#6cf}
+    .diag .err{color:#ff9}
+  </style>
 </head>
 <body>
+  <!-- 진단 배너: 상태/에러를 여기 표기 -->
+  <div id="diag" class="diag">
+    <div>Auth: <b id="diag-auth">…</b></div>
+    <div>UID: <b id="diag-uid">–</b></div>
+    <div>Build: <b>v1.1</b></div>
+    <div class="err" id="diag-error"></div>
+  </div>
+
   <header class="topbar">
     <div class="brand">Simple Chat</div>
     <div class="nick-area">
