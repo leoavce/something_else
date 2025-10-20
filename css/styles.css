@@ -1,0 +1,8 @@
+/* 기본 레이아웃 보조 스타일 */
+#room-list .room-item { cursor:pointer; }
+#room-list .room-item.active { background: rgba(74,144,226,0.12); border-left:4px solid #4A90E2; }
+#message-feed .msg-bubble { max-width: 70%; }
+#message-feed .msg-me { background:#4A90E2; color:#fff; border-radius: 0.75rem; border-bottom-right-radius: 0.25rem; }
+#message-feed .msg-other { background:#f3f4f6; color:#111827; border-radius: 0.75rem; border-bottom-left-radius: 0.25rem; }
+
+.hidden { display:none; }
