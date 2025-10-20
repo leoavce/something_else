@@ -8,10 +8,10 @@ const el = {
   nickSave: document.getElementById('save-nick'),
   list: document.getElementById('messages'),
   input: document.getElementById('message'),
-  send: document.getElementById('send')
+  send: document.getElementById('send'),
+  err: document.getElementById('diag-error')
 };
 
-// 닉네임 로컬 저장/로드
 function loadNick() { return localStorage.getItem('simplechat_nick') || ''; }
 function saveNick(v) { localStorage.setItem('simplechat_nick', v); }
 
@@ -33,7 +33,6 @@ function requireNick() {
   return v;
 }
 
-// 메시지 렌더
 function renderMessage(m, isMe) {
   const li = document.createElement('li');
   li.className = `row ${isMe ? 'me' : ''}`;
@@ -57,7 +56,6 @@ function timeStr(ts) {
   try { return ts?.toDate()?.toLocaleString?.() || ''; } catch { return ''; }
 }
 
-// 전송
 async function sendMessage() {
   const text = (el.input.value || '').trim();
   if (!text) return;
@@ -71,8 +69,9 @@ async function sendMessage() {
       text, name, uid, createdAt: serverTimestamp()
     });
     el.input.value = '';
+    if (el.err) el.err.textContent = ''; // 전송 성공 시 에러지우기
   } catch (e) {
-    alert('전송 실패: ' + (e?.message || e));
+    if (el.err) el.err.textContent = '전송 실패: ' + (e?.message || e);
   } finally {
     el.send.disabled = false;
   }
@@ -83,23 +82,27 @@ el.input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
-// 구독
 function subscribe() {
-  const ref = collection(db, 'messages');
-  const q = query(ref, orderBy('createdAt', 'asc'), limit(500));
-  onSnapshot(q, (snap) => {
-    // 간단히 전체 다시 그리기(단순/안정 우선)
-    el.list.innerHTML = '';
-    snap.forEach(doc => {
-      const m = doc.data();
-      const isMe = m.uid && (m.uid === auth.currentUser?.uid);
-      el.list.appendChild(renderMessage(m, isMe));
+  try {
+    const ref = collection(db, 'messages');
+    const q = query(ref, orderBy('createdAt', 'asc'), limit(500));
+    onSnapshot(q, (snap) => {
+      el.list.innerHTML = '';
+      snap.forEach(doc => {
+        const m = doc.data();
+        const isMe = m.uid && (m.uid === auth.currentUser?.uid);
+        el.list.appendChild(renderMessage(m, isMe));
+      });
+      requestAnimationFrame(() => {
+        el.list.parentElement.scrollTop = el.list.parentElement.scrollHeight;
+      });
+      if (el.err) el.err.textContent = ''; // 구독 성공 시 에러지우기
+    }, (err) => {
+      if (el.err) el.err.textContent = '구독 실패: ' + (err?.message || err);
     });
-    // 스크롤 맨 아래
-    requestAnimationFrame(() => {
-      el.list.parentElement.scrollTop = el.list.parentElement.scrollHeight;
-    });
-  });
+  } catch (e) {
+    if (el.err) el.err.textContent = '구독 초기화 실패: ' + (e?.message || e);
+  }
 }
 
 window.addEventListener('auth:ready', subscribe);
