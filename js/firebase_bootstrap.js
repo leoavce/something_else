@@ -10,6 +10,7 @@ const firebaseConfig = {
   projectId: "messenger-c6be1",
   appId: "1:160967686629:web:98213b58604f3cec57170c",
 };
+
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db   = getFirestore(app);
