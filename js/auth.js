@@ -1,70 +1,104 @@
-import { auth } from "./firebase_bootstrap.js";
+import { auth, db } from "./firebase_bootstrap.js";
 import {
-  onAuthStateChanged, createUserWithEmailAndPassword,
-  signInWithEmailAndPassword, signOut, updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
 
-// 요소
-const userInfo     = $("user-info");
-const userNameSpan = $("user-name");
-const authButtons  = $("auth-buttons");
-const btnOpenAuth  = $("btn-open-auth");
-const btnLogout    = $("btn-logout");
+const el = {
+  messages: $("messages"),
+  nick: $("nickname"),
+  nickSave: $("save-nick"),
+  input: $("message"),
+  send: $("send"),
+};
 
-const modal        = $("auth-modal");
-const btnCloseAuth = $("btn-close-auth");
-const btnSignup    = $("btn-signup");
-const btnLogin     = $("btn-login");
-const emailInput   = $("auth-email");
-const pwInput      = $("auth-password");
+function loadNick() { return localStorage.getItem("simplechat_nick") || ""; }
+function saveNick(v) { localStorage.setItem("simplechat_nick", v); }
+el.nick.value = loadNick();
 
-// 모달 열고닫기
-btnOpenAuth.addEventListener("click", () => { modal.classList.remove("hidden"); modal.setAttribute("aria-hidden","false"); });
-btnCloseAuth.addEventListener("click", () => { modal.classList.add("hidden"); modal.setAttribute("aria-hidden","true"); });
+el.nickSave.addEventListener("click", () => {
+  const v = (el.nick.value || "").trim().slice(0,20);
+  saveNick(v);
+  el.nick.value = v;
+  alert("표시 이름 저장됨");
+});
 
-btnSignup.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  const pw    = pwInput.value;
-  if (!email || pw.length < 6) return alert("이메일/비밀번호를 확인하세요(6자 이상)");
+function currentDisplayName() {
+  const local = (el.nick.value || "").trim();
+  if (local) return local.slice(0,20);
+  const u = auth.currentUser;
+  return (u?.displayName || u?.email?.split("@")[0] || u?.uid || "사용자").slice(0,20);
+}
+
+function renderMessage(m, isMe) {
+  const li = document.createElement("li");
+  li.className = `row ${isMe ? "me" : ""}`;
+
+  const bubble = document.createElement("div");
+  bubble.className = "msg";
+
+  const meta = document.createElement("span");
+  meta.className = "meta";
+  meta.textContent = `${m.name || "사용자"} • ${timeStr(m.createdAt)}`;
+
+  const text = document.createElement("div");
+  text.textContent = m.text || "";
+
+  bubble.appendChild(meta);
+  bubble.appendChild(text);
+  li.appendChild(bubble);
+  return li;
+}
+
+function timeStr(ts) { try { return ts?.toDate()?.toLocaleString?.() || ""; } catch { return ""; } }
+
+function scrollToBottom() {
+  // messages 자체가 overflow 컨테이너이므로 여기에 직접 설정
+  el.messages.scrollTop = el.messages.scrollHeight;
+}
+
+async function sendMessage() {
+  if (!auth.currentUser) { alert("로그인이 필요합니다"); return; }
+  const text = (el.input.value || "").trim();
+  if (!text) return;
+
+  const name = currentDisplayName();
+  const uid  = auth.currentUser.uid;
+
+  el.send.disabled = true;
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pw);
-    // 표시이름 기본값: 이메일 앞부분
-    const display = email.split("@")[0].slice(0,20);
-    await updateProfile(cred.user, { displayName: display });
-    alert("회원가입 완료");
-    modal.classList.add("hidden");
+    await addDoc(collection(db, "messages"), { text, name, uid, createdAt: serverTimestamp() });
+    el.input.value = "";
+    scrollToBottom(); // 전송 직후도 한번
   } catch (e) {
-    alert("회원가입 실패: " + (e?.message || e));
+    alert("전송 실패: " + (e?.message || e));
+  } finally {
+    el.send.disabled = false;
   }
+}
+
+el.send.addEventListener("click", sendMessage);
+el.input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
-btnLogin.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  const pw    = pwInput.value;
-  try {
-    await signInWithEmailAndPassword(auth, email, pw);
-    modal.classList.add("hidden");
-  } catch (e) {
-    alert("로그인 실패: " + (e?.message || e));
-  }
-});
+function subscribe() {
+  const ref = collection(db, "messages");
+  const q = query(ref, orderBy("createdAt", "asc"), limit(500));
+  onSnapshot(q, (snap) => {
+    // 단순 전체 리렌더(성능 문제 없고 안전)
+    el.messages.innerHTML = "";
+    snap.forEach(d => {
+      const m = d.data();
+      const isMe = m.uid && (m.uid === auth.currentUser?.uid);
+      el.messages.appendChild(renderMessage(m, isMe));
+    });
+    // 스크롤 맨 아래로
+    requestAnimationFrame(scrollToBottom);
+  }, (err) => {
+    alert("채팅 구독 실패: " + (err?.message || err));
+  });
+}
 
-btnLogout.addEventListener("click", async () => {
-  await signOut(auth);
-});
-
-// 상태 반영
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userNameSpan.textContent = user.displayName || user.email || user.uid;
-    userInfo.classList.remove("hidden");
-    authButtons.classList.add("hidden");
-    window.dispatchEvent(new CustomEvent("auth:ready", { detail: user }));
-  } else {
-    userInfo.classList.add("hidden");
-    authButtons.classList.remove("hidden");
-    window.dispatchEvent(new CustomEvent("auth:logout"));
-  }
-});
+window.addEventListener("auth:ready", subscribe);
