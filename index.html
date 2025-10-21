@@ -3,44 +3,82 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simple Realtime Chat</title>
-  <!-- favicon (404 방지) -->
+  <title>Simple Realtime Chat + Notes</title>
   <link rel="icon" href="./icons/icon-192.png" type="image/png" />
   <link rel="stylesheet" href="./css/styles.css" />
-  <style>
-    .diag {background:#111;color:#eee;padding:6px 10px;font:12px/1.4 system-ui;display:flex;gap:12px;flex-wrap:wrap}
-    .diag b{color:#6cf}
-    .diag .err{color:#ff9}
-  </style>
 </head>
 <body>
-  <!-- 진단 배너: 상태/에러를 여기 표기 -->
-  <div id="diag" class="diag">
-    <div>Auth: <b id="diag-auth">…</b></div>
-    <div>UID: <b id="diag-uid">–</b></div>
-    <div>Build: <b>v1.1</b></div>
-    <div class="err" id="diag-error"></div>
-  </div>
-
+  <!-- 상단바: 로그인 상태/버튼 -->
   <header class="topbar">
     <div class="brand">Simple Chat</div>
-    <div class="nick-area">
-      <input id="nickname" class="nick-input" placeholder="닉네임(최대 20자)" maxlength="20" />
-      <button id="save-nick" class="btn">저장</button>
+    <div class="auth-area">
+      <div id="user-info" class="user-info hidden">
+        <span id="user-name" class="user-name"></span>
+        <button id="btn-logout" class="btn">로그아웃</button>
+      </div>
+      <div id="auth-buttons" class="auth-buttons">
+        <button id="btn-open-auth" class="btn primary">로그인 / 회원가입</button>
+      </div>
     </div>
   </header>
 
-  <main class="chat-wrap">
-    <ul id="messages" class="messages" aria-live="polite"></ul>
+  <!-- 메인: 좌측 채팅, 우측 메모 -->
+  <main class="grid">
+    <!-- 채팅 -->
+    <section class="panel">
+      <h2 class="panel-title">채팅방</h2>
+      <ul id="messages" class="messages" aria-live="polite"></ul>
+
+      <div class="inputbar">
+        <input id="nickname" class="nick-input" placeholder="표시 이름(최대 20자)" maxlength="20" />
+        <button id="save-nick" class="btn">저장</button>
+      </div>
+
+      <div class="inputbar">
+        <input id="message" class="msg-input" placeholder="메시지를 입력하세요" maxlength="1000" />
+        <button id="send" class="btn primary">전송</button>
+      </div>
+    </section>
+
+    <!-- 메모 -->
+    <aside class="panel">
+      <h2 class="panel-title">내 메모</h2>
+
+      <div class="note-editor">
+        <input id="note-title" class="note-title" placeholder="제목" maxlength="100" />
+        <textarea id="note-body" class="note-body" rows="5" placeholder="내용"></textarea>
+        <div class="note-actions">
+          <button id="btn-note-save" class="btn primary">추가</button>
+          <button id="btn-note-clear" class="btn">지우기</button>
+        </div>
+      </div>
+
+      <ul id="note-list" class="note-list"></ul>
+    </aside>
   </main>
 
-  <footer class="inputbar">
-    <input id="message" class="msg-input" placeholder="메시지를 입력하세요" maxlength="1000" />
-    <button id="send" class="btn primary">전송</button>
-  </footer>
+  <!-- 인증 모달 -->
+  <div id="auth-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <h3 id="auth-title" class="modal-title">로그인 / 회원가입</h3>
+      <form id="auth-form">
+        <label class="label">이메일</label>
+        <input id="auth-email" class="input" type="email" required placeholder="you@example.com" />
+        <label class="label">비밀번호</label>
+        <input id="auth-password" class="input" type="password" required minlength="6" placeholder="6자 이상" />
+        <div class="modal-actions">
+          <button id="btn-signup" type="button" class="btn">회원가입</button>
+          <button id="btn-login"  type="button" class="btn primary">로그인</button>
+        </div>
+      </form>
+      <button id="btn-close-auth" class="btn block">닫기</button>
+    </div>
+  </div>
 
-  <!-- Firebase 초기화 & 채팅 로직 -->
+  <!-- 스크립트 -->
   <script type="module" src="./js/firebase_bootstrap.js"></script>
+  <script type="module" src="./js/auth.js"></script>
   <script type="module" src="./js/chat.js"></script>
+  <script type="module" src="./js/notes.js"></script>
 </body>
 </html>
