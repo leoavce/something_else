@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase_bootstrap.js";
 import {
-  collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy,
-  doc, updateDoc, deleteDoc
+  collection, addDoc, serverTimestamp, onSnapshot, query, where,
+  doc, updateDoc, deleteDoc, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
@@ -12,7 +12,6 @@ const addBtn  = $("btn-note-save");
 const clrBtn  = $("btn-note-clear");
 const listEl  = $("note-list");
 
-// 렌더
 function renderItem(id, n) {
   const li = document.createElement("li");
   li.className = "note-item";
@@ -62,12 +61,23 @@ clrBtn.addEventListener("click", () => { titleEl.value = ""; bodyEl.value = ""; 
 function subscribeNotes() {
   const me = auth.currentUser;
   if (!me) return;
-  const ref = collection(db, "notes");
-  const q = query(ref, where("ownerUid", "==", me.uid), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snap) => {
+
+  // 1단계: 인덱스 없이도 동작하는 기본 구독 (정렬 없이 최신이 위로 안 올 수는 있음)
+  const baseQ = query(collection(db, "notes"), where("ownerUid", "==", me.uid));
+  onSnapshot(baseQ, (snap) => {
+    const items = [];
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    // createdAt 기준으로 프론트에서 정렬(인덱스 회피)
+    items.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     listEl.innerHTML = "";
-    snap.forEach(d => listEl.appendChild(renderItem(d.id, d.data())));
-  }, (err) => alert("메모 구독 실패: " + (err?.message || err)));
+    for (const it of items) listEl.appendChild(renderItem(it.id, it));
+  }, (err) => {
+    alert("메모 구독 실패: " + (err?.message || err));
+  });
+
+  // 참고) Firestore 인덱스 사용 정렬을 원하면 아래로 교체하고 콘솔에서 복합 인덱스 생성
+  // const qIdx = query(collection(db,"notes"), where("ownerUid","==",me.uid), orderBy("createdAt","desc"));
+  // onSnapshot(qIdx, ... );
 }
 
 window.addEventListener("auth:ready", subscribeNotes);
