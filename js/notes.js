@@ -11,6 +11,8 @@ const addBtn  = $("btn-note-save");
 const clrBtn  = $("btn-note-clear");
 const listEl  = $("note-list");
 
+let unsubscribeNotes = null;
+
 function renderItem(id, n) {
   const li = document.createElement("li");
   li.className = "note-item";
@@ -39,7 +41,7 @@ function renderItem(id, n) {
 }
 
 addBtn.addEventListener("click", async () => {
-  if (!auth.currentUser) return;
+  if (!auth.currentUser) return alert("로그인 필요");
   const title = (titleEl.value || "").trim();
   const body  = (bodyEl.value || "").trim();
   if (!title && !body) return;
@@ -51,21 +53,36 @@ addBtn.addEventListener("click", async () => {
     updatedAt: serverTimestamp()
   });
 
-  titleEl.value = ""; bodyEl.value = "";
+  titleEl.value = "";
+  bodyEl.value  = "";
 });
+
 clrBtn.addEventListener("click", () => { titleEl.value = ""; bodyEl.value = ""; });
 
-function subscribeNotes() {
-  const me = auth.currentUser; if (!me) return;
-  const q = query(collection(db, "notes"), where("ownerUid", "==", me.uid)); // 정렬 없이도 우선 표시
-  onSnapshot(q, (snap) => {
-    const arr = [];
-    snap.forEach(d => arr.push({ id:d.id, ...d.data() }));
-    // 프론트에서 시간순 정렬(인덱스 없이)
-    arr.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+function startNotesSubscription(uid) {
+  if (unsubscribeNotes) { unsubscribeNotes(); unsubscribeNotes = null; }
+  const q = query(collection(db, "notes"), where("ownerUid", "==", uid));
+  unsubscribeNotes = onSnapshot(q, (snap) => {
+    const items = [];
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    // createdAt 기준 최신순(클라 정렬: 인덱스 불필요)
+    items.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     listEl.innerHTML = "";
-    for (const it of arr) listEl.appendChild(renderItem(it.id, it));
-  }, (err) => alert("메모 구독 실패: " + (err?.message || err)));
+    for (const it of items) listEl.appendChild(renderItem(it.id, it));
+  }, (err) => {
+    alert("메모 구독 실패: " + (err?.message || err));
+  });
 }
-window.addEventListener("auth:ready", subscribeNotes);
-window.addEventListener("auth:logout", () => { listEl.innerHTML = ""; });
+
+// ▶ 로드 즉시 상태 확인 + 변화 감지 둘 다 처리
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+onAuthStateChanged(auth, (user) => {
+  if (user) startNotesSubscription(user.uid);
+  else {
+    if (unsubscribeNotes) { unsubscribeNotes(); unsubscribeNotes = null; }
+    listEl.innerHTML = "";
+  }
+});
+
+// 혹시 auth_gate보다 먼저 불렸을 때 대비
+if (auth.currentUser) startNotesSubscription(auth.currentUser.uid);
