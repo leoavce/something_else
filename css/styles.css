@@ -9,7 +9,6 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
   padding:10px 12px;background:var(--card);border-bottom:1px solid var(--border);}
 .brand{font-weight:700;}
 .auth-area{display:flex;gap:8px;align-items:center;}
-.user-info{display:flex;gap:8px;align-items:center;}
 .user-name{font-weight:600;}
 .hidden{display:none !important;}
 .btn{padding:8px 12px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;}
@@ -24,7 +23,7 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:400px;}
 .panel-title{margin:4px 4px 12px;font-size:16px;font-weight:700}
 
-/* 채팅 메시지 리스트(겹침 방지) */
+/* 채팅 리스트(겹침 방지) */
 .messages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto;}
 .row{display:flex;align-items:flex-end;gap:8px;flex-wrap:nowrap;}
 .me{justify-content:flex-end;}
@@ -39,20 +38,4 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 /* 입력 줄 */
 .inputbar{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px;}
 .nick-input,.msg-input,.input,.note-title,.note-body{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;}
-.label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px;}
-
-/* 메모 */
-.note-editor{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-.note-actions{display:flex;gap:8px;}
-.note-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow:auto;}
-.note-item{border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff;}
-.note-title-text{font-weight:700;margin:0 0 6px;}
-.note-body-text{margin:0;white-space:pre-wrap;word-break:break-word;}
-.note-buttons{display:flex;gap:8px;margin-top:8px;}
-.btn.small{padding:6px 8px;font-size:12px}
-
-/* 모달 */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}
-.modal-box{width:min(420px,90vw);background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;}
-.modal-title{margin:0 0 8px;}
-.modal-actions{display:flex;gap:8px;margin-top:10px;}
+.label{display:block;font-size:12px;color:var(--muted);margin
