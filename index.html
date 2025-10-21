@@ -3,30 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>로그인 / 회원가입</title>
+  <title>Simple Realtime Chat + Notes</title>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-  <main class="auth-container">
-    <section class="auth-card">
-      <h1 class="auth-title">Simple Chat</h1>
-      <p class="auth-sub">로그인 / 회원가입</p>
+  <!-- 상단바 -->
+  <header class="topbar">
+    <div class="brand">Simple Chat</div>
+    <div class="auth-area">
+      <span id="user-name" class="user-name"></span>
+      <button id="btn-logout" class="btn">로그아웃</button>
+    </div>
+  </header>
 
-      <form id="auth-form" class="auth-form">
-        <label class="label">이메일</label>
-        <input id="auth-email" class="input" type="email" required placeholder="you@example.com" />
-        <label class="label">비밀번호</label>
-        <input id="auth-password" class="input" type="password" required minlength="6" placeholder="6자 이상" />
-        <div class="auth-actions">
-          <button id="btn-signup" type="button" class="btn">회원가입</button>
-          <button id="btn-login"  type="button" class="btn primary">로그인</button>
-        </div>
-        <p id="auth-msg" class="auth-msg"></p>
-      </form>
+  <!-- 앱 본문: 기본은 hidden, 로그인 후 표시 -->
+  <main id="app-root" class="grid hidden">
+    <!-- 채팅 -->
+    <section class="panel">
+      <h2 class="panel-title">채팅방</h2>
+      <ul id="messages" class="messages" aria-live="polite"></ul>
+
+      <div class="inputbar">
+        <input id="nickname" class="nick-input" placeholder="표시 이름(최대 20자)" maxlength="20" />
+        <button id="save-nick" class="btn">저장</button>
+      </div>
+
+      <div class="inputbar">
+        <input id="message" class="msg-input" placeholder="메시지를 입력하세요" maxlength="1000" />
+        <button id="send" class="btn primary">전송</button>
+      </div>
     </section>
+
+    <!-- 메모 -->
+    <aside class="panel">
+      <h2 class="panel-title">내 메모</h2>
+
+      <div class="note-editor">
+        <input id="note-title" class="note-title" placeholder="제목" maxlength="100" />
+        <textarea id="note-body" class="note-body" rows="5" placeholder="내용"></textarea>
+        <div class="note-actions">
+          <button id="btn-note-save" class="btn primary">추가</button>
+          <button id="btn-note-clear" class="btn">지우기</button>
+        </div>
+      </div>
+
+      <ul id="note-list" class="note-list"></ul>
+    </aside>
   </main>
 
   <script type="module" src="./js/firebase_bootstrap.js"></script>
-  <script type="module" src="./js/auth_page.js"></script>
+  <script type="module" src="./js/auth_gate.js"></script>
+  <script type="module" src="./js/chat.js"></script>
+  <script type="module" src="./js/notes.js"></script>
 </body>
 </html>
