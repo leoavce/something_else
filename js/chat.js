@@ -4,7 +4,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
-
 const el = {
   messages: $("messages"),
   nick: $("nickname"),
@@ -19,8 +18,7 @@ el.nick.value = loadNick();
 
 el.nickSave.addEventListener("click", () => {
   const v = (el.nick.value || "").trim().slice(0,20);
-  saveNick(v);
-  el.nick.value = v;
+  saveNick(v); el.nick.value = v;
   alert("표시 이름 저장됨");
 });
 
@@ -34,48 +32,33 @@ function currentDisplayName() {
 function renderMessage(m, isMe) {
   const li = document.createElement("li");
   li.className = `row ${isMe ? "me" : ""}`;
-
   const bubble = document.createElement("div");
   bubble.className = "msg";
-
   const meta = document.createElement("span");
   meta.className = "meta";
   meta.textContent = `${m.name || "사용자"} • ${timeStr(m.createdAt)}`;
-
   const text = document.createElement("div");
   text.textContent = m.text || "";
-
-  bubble.appendChild(meta);
-  bubble.appendChild(text);
+  bubble.appendChild(meta); bubble.appendChild(text);
   li.appendChild(bubble);
   return li;
 }
-
 function timeStr(ts) { try { return ts?.toDate()?.toLocaleString?.() || ""; } catch { return ""; } }
-
-function scrollToBottom() {
-  // messages 자체가 overflow 컨테이너이므로 여기에 직접 설정
-  el.messages.scrollTop = el.messages.scrollHeight;
-}
+function scrollToBottom(){ el.messages.scrollTop = el.messages.scrollHeight; }
 
 async function sendMessage() {
-  if (!auth.currentUser) { alert("로그인이 필요합니다"); return; }
+  if (!auth.currentUser) return; // gate에 의해 원래 올 수 없음, 방어
   const text = (el.input.value || "").trim();
   if (!text) return;
-
   const name = currentDisplayName();
   const uid  = auth.currentUser.uid;
 
   el.send.disabled = true;
   try {
     await addDoc(collection(db, "messages"), { text, name, uid, createdAt: serverTimestamp() });
-    el.input.value = "";
-    scrollToBottom(); // 전송 직후도 한번
-  } catch (e) {
-    alert("전송 실패: " + (e?.message || e));
-  } finally {
-    el.send.disabled = false;
-  }
+    el.input.value = ""; scrollToBottom();
+  } catch (e) { alert("전송 실패: " + (e?.message || e)); }
+  finally { el.send.disabled = false; }
 }
 
 el.send.addEventListener("click", sendMessage);
@@ -87,18 +70,14 @@ function subscribe() {
   const ref = collection(db, "messages");
   const q = query(ref, orderBy("createdAt", "asc"), limit(500));
   onSnapshot(q, (snap) => {
-    // 단순 전체 리렌더(성능 문제 없고 안전)
     el.messages.innerHTML = "";
     snap.forEach(d => {
       const m = d.data();
       const isMe = m.uid && (m.uid === auth.currentUser?.uid);
       el.messages.appendChild(renderMessage(m, isMe));
     });
-    // 스크롤 맨 아래로
     requestAnimationFrame(scrollToBottom);
-  }, (err) => {
-    alert("채팅 구독 실패: " + (err?.message || err));
-  });
+  }, (err) => alert("채팅 구독 실패: " + (err?.message || err)));
 }
 
 window.addEventListener("auth:ready", subscribe);
