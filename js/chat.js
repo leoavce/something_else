@@ -10,10 +10,9 @@ const el = {
   nick: $("nickname"),
   nickSave: $("save-nick"),
   input: $("message"),
-  send: $("send")
+  send: $("send"),
 };
 
-// 닉네임(표시이름) - 로그인 계정의 displayName 우선, 사용자가 입력 시 로컬 override
 function loadNick() { return localStorage.getItem("simplechat_nick") || ""; }
 function saveNick(v) { localStorage.setItem("simplechat_nick", v); }
 el.nick.value = loadNick();
@@ -29,11 +28,9 @@ function currentDisplayName() {
   const local = (el.nick.value || "").trim();
   if (local) return local.slice(0,20);
   const u = auth.currentUser;
-  if (!u) return "";
-  return (u.displayName || u.email?.split("@")[0] || u.uid).slice(0,20);
+  return (u?.displayName || u?.email?.split("@")[0] || u?.uid || "사용자").slice(0,20);
 }
 
-// 메시지 렌더 (겹침 방지: block 구조 + meta 분리)
 function renderMessage(m, isMe) {
   const li = document.createElement("li");
   li.className = `row ${isMe ? "me" : ""}`;
@@ -54,8 +51,11 @@ function renderMessage(m, isMe) {
   return li;
 }
 
-function timeStr(ts) {
-  try { return ts?.toDate()?.toLocaleString?.() || ""; } catch { return ""; }
+function timeStr(ts) { try { return ts?.toDate()?.toLocaleString?.() || ""; } catch { return ""; } }
+
+function scrollToBottom() {
+  // messages 자체가 overflow 컨테이너이므로 여기에 직접 설정
+  el.messages.scrollTop = el.messages.scrollHeight;
 }
 
 async function sendMessage() {
@@ -63,13 +63,14 @@ async function sendMessage() {
   const text = (el.input.value || "").trim();
   if (!text) return;
 
-  const name = currentDisplayName() || "사용자";
+  const name = currentDisplayName();
   const uid  = auth.currentUser.uid;
 
   el.send.disabled = true;
   try {
     await addDoc(collection(db, "messages"), { text, name, uid, createdAt: serverTimestamp() });
     el.input.value = "";
+    scrollToBottom(); // 전송 직후도 한번
   } catch (e) {
     alert("전송 실패: " + (e?.message || e));
   } finally {
@@ -86,16 +87,15 @@ function subscribe() {
   const ref = collection(db, "messages");
   const q = query(ref, orderBy("createdAt", "asc"), limit(500));
   onSnapshot(q, (snap) => {
+    // 단순 전체 리렌더(성능 문제 없고 안전)
     el.messages.innerHTML = "";
     snap.forEach(d => {
       const m = d.data();
       const isMe = m.uid && (m.uid === auth.currentUser?.uid);
       el.messages.appendChild(renderMessage(m, isMe));
     });
-    // 스크롤 하단 고정
-    requestAnimationFrame(() => {
-      el.messages.parentElement.scrollTop = el.messages.parentElement.scrollHeight;
-    });
+    // 스크롤 맨 아래로
+    requestAnimationFrame(scrollToBottom);
   }, (err) => {
     alert("채팅 구독 실패: " + (err?.message || err));
   });
