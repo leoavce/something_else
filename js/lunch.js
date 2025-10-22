@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase_bootstrap.js";
 import {
-  collection, addDoc, serverTimestamp, query, where, orderBy,
-  onSnapshot, doc, setDoc, getDoc, updateDoc
+  collection, addDoc, serverTimestamp, query, where,
+  onSnapshot, doc, setDoc, getDoc, updateDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
@@ -51,12 +51,10 @@ async function createPollFromText(raw) {
   if (!cands.length) return;
 
   const since = new Date(Date.now() - ROOM_ONLINE_WINDOW_MS);
+  // presence는 단일 where만 사용 → 인덱스 불필요
   const qPres = query(collection(db, "presence"), where("lastSeen", ">=", since));
-  const snap = await new Promise((res, rej) => {
-    const unsub = onSnapshot(qPres, (s) => { unsub(); res(s); }, rej);
-  });
-  const participants = [];
-  snap.forEach(d => participants.push(d.id));
+  const presSnap = await getDocs(qPres);
+  const participants = presSnap.docs.map(d => d.id);
   if (!participants.includes(auth.currentUser.uid)) participants.push(auth.currentUser.uid);
 
   const existing = await getOpenPoll();
@@ -75,22 +73,22 @@ async function createPollFromText(raw) {
   attachPoll(ref.id);
 }
 
+// 🔧 인덱스 없이 '열린 폴' 하나 가져오기: where만 쓰고, 정렬은 프론트에서
 async function getOpenPoll() {
-  const qOpen = query(collection(db, "lunch_polls"),
-    where("status", "==", "open"),
-    orderBy("createdAt", "desc"));
-  const snap = await new Promise((res, rej) => {
-    const unsub = onSnapshot(qOpen, (s) => { unsub(); res(s); }, rej);
-  });
-  let found = null;
-  snap.forEach(d => { if (!found) found = { id: d.id, ...d.data() }; });
-  return found;
+  const qOpen = query(collection(db, "lunch_polls"), where("status", "==", "open"));
+  const snap = await getDocs(qOpen);
+  // createdAt 내림차순으로 정렬 후 맨 앞 반환
+  const list = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
+  return list[0] || null;
 }
 
 function startCountdown(expiresAt) {
   stopCountdown();
   function tick() {
-    const remain = new Date(expiresAt).getTime() - Date.now();
+    const expireMs = expiresAt?.toDate ? expiresAt.toDate().getTime() : new Date(expiresAt).getTime();
+    const remain = expireMs - Date.now();
     if (remain <= 0) {
       timerSpan.textContent = "00:00";
       stopCountdown();
@@ -146,7 +144,7 @@ function attachPoll(pollId) {
     const p = psnap.data();
 
     showBanner(p);
-    startCountdown(p.expiresAt?.toDate?.() || p.expiresAt);
+    startCountdown(p.expiresAt);
 
     if (unsubResp) unsubResp();
     unsubResp = onSnapshot(collection(db, "lunch_polls", pollId, "responses"), (rsnap) => {
@@ -258,7 +256,6 @@ function successConfetti() {
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   startPresence();
-
   const open = await getOpenPoll();
   if (open) attachPoll(open.id);
 });
