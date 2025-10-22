@@ -4,6 +4,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
+
 const el = {
   messages: $("messages"),
   nick: $("nickname"),
@@ -18,7 +19,8 @@ el.nick.value = loadNick();
 
 el.nickSave.addEventListener("click", () => {
   const v = (el.nick.value || "").trim().slice(0,20);
-  saveNick(v); el.nick.value = v;
+  saveNick(v);
+  el.nick.value = v;
   alert("표시 이름 저장됨");
 });
 
@@ -47,18 +49,32 @@ function timeStr(ts) { try { return ts?.toDate()?.toLocaleString?.() || ""; } ca
 function scrollToBottom(){ el.messages.scrollTop = el.messages.scrollHeight; }
 
 async function sendMessage() {
-  if (!auth.currentUser) return; // gate에 의해 원래 올 수 없음, 방어
+  if (!auth.currentUser) { alert("로그인이 필요합니다"); return; }
   const text = (el.input.value || "").trim();
   if (!text) return;
+
+  // 점심 메뉴 커맨드
+  if (text.startsWith("@점심메뉴_")) {
+    try {
+      await window.__lunchCreatePollFromText(text);
+    } catch(e){ alert("점심 메뉴 시작 실패: " + (e?.message || e)); }
+    el.input.value = "";
+    return;
+  }
+
   const name = currentDisplayName();
   const uid  = auth.currentUser.uid;
 
   el.send.disabled = true;
   try {
     await addDoc(collection(db, "messages"), { text, name, uid, createdAt: serverTimestamp() });
-    el.input.value = ""; scrollToBottom();
-  } catch (e) { alert("전송 실패: " + (e?.message || e)); }
-  finally { el.send.disabled = false; }
+    el.input.value = "";
+    scrollToBottom();
+  } catch (e) {
+    alert("전송 실패: " + (e?.message || e));
+  } finally {
+    el.send.disabled = false;
+  }
 }
 
 el.send.addEventListener("click", sendMessage);
@@ -77,7 +93,9 @@ function subscribe() {
       el.messages.appendChild(renderMessage(m, isMe));
     });
     requestAnimationFrame(scrollToBottom);
-  }, (err) => alert("채팅 구독 실패: " + (err?.message || err)));
+  }, (err) => {
+    alert("채팅 구독 실패: " + (err?.message || err));
+  });
 }
 
 window.addEventListener("auth:ready", subscribe);
