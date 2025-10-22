@@ -58,3 +58,23 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .auth-form{display:flex;flex-direction:column;gap:8px;}
 .auth-actions{display:flex;gap:8px;margin-top:6px;}
 .auth-msg{min-height:18px;font-size:12px;color:#b91c1c;}
+
+/* Lunch banner */
+.lunch-banner{border:1px dashed var(--border);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff}
+.lunch-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.lunch-timer{
+  font-weight:800;color:#dc2626;
+  font-size:12px; /* ⏱ 작게 */
+  padding:2px 6px;border:1px solid #fecaca;border-radius:9999px;background:#fff1f2;
+}
+.lunch-candidates{display:flex;flex-wrap:wrap;gap:8px}
+.lunch-cta{display:flex;gap:8px;align-items:center;margin-top:8px}
+.lunch-active{font-weight:700}
+.lunch-status{margin-top:8px;font-weight:600}
+.lunch-btn{padding:6px 10px;border:1px solid var(--border);background:#f8fafc;border-radius:9999px;cursor:pointer}
+.lunch-btn:hover{background:#eef2ff}
+
+/* 간단 폭죽(컨페티) */
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;width:8px;height:14px;opacity:.9;animation:fall 1200ms linear forwards}
+@keyframes fall{ to{transform:translateY(100vh) rotate(720deg);opacity:0} }
