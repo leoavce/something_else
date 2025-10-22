@@ -69,7 +69,7 @@ form.addEventListener("submit", (e) => {
   btnIn.click();
 });
 
-// 이미 로그인 상태면 바로 앱으로 이동
+// 이미 로그인 상태면 바로 앱으로
 onAuthStateChanged(auth, (user) => {
   if (user) location.replace("./index.html");
 });
