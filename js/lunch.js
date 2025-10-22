@@ -27,12 +27,13 @@ let unsubResp       = null;
 let countdownTimer  = null;
 let presenceUnsub   = null;
 
-// ✅ 닫은 투표는 다시 자동 표시하지 않도록 (세션 기준)
+// 닫은 투표는 같은 세션에서 다시 자동 표시하지 않도록 메모
 let dismissedPollId = sessionStorage.getItem("dismissed_poll_id") || null;
 
-const ROOM_ONLINE_WINDOW_MS = 2 * 60 * 1000;
-const POLL_DURATION_MS      = 5 * 60 * 1000;
+const ROOM_ONLINE_WINDOW_MS = 2 * 60 * 1000; // 최근 2분
+const POLL_DURATION_MS      = 5 * 60 * 1000; // 5분
 
+/* ========= Presence ========= */
 function startPresence() {
   stopPresence();
   const ref = doc(db, "presence", auth.currentUser.uid);
@@ -48,6 +49,8 @@ function startPresence() {
 }
 function stopPresence(){ if (presenceUnsub) presenceUnsub(), presenceUnsub=null; }
 
+/* ========= Poll 생성 ========= */
+// 채팅 입력 "@점심메뉴_김밥_라멘_버거" → 이 함수 호출
 async function createPollFromText(raw) {
   const parts = raw.split("_").map(s => s.trim()).filter(Boolean);
   if (parts.length < 2) { alert("후보가 필요합니다. 예) @점심메뉴_김밥_라멘"); return; }
@@ -55,12 +58,14 @@ async function createPollFromText(raw) {
   candidates = Array.from(new Set(candidates));
   if (!candidates.length) return;
 
+  // 최근 2분 내 활동자(online 추정) → participants
   const since = new Date(Date.now() - ROOM_ONLINE_WINDOW_MS);
   const qPres = query(collection(db, "presence"), where("lastSeen", ">=", since));
   const presSnap = await getDocs(qPres);
   const participants = presSnap.docs.map(d => d.id);
   if (!participants.includes(auth.currentUser.uid)) participants.push(auth.currentUser.uid);
 
+  // 열린 폴이 이미 있으면 생성 차단
   const existing = await getOpenPoll();
   if (existing) { alert("진행 중인 점심 투표가 있습니다."); return; }
 
@@ -70,18 +75,19 @@ async function createPollFromText(raw) {
     candidates,
     participants,
     activeMenu: null,
-    status: "open",
+    status: "open",       // open | success | failed | expired
     createdAt: serverTimestamp(),
     expiresAt
   });
 
-  // 새 폴을 생성했으므로 이전에 닫아둔 배너는 무효화
+  // 새 폴 생성 시, 이전에 닫아둔 배너 상태 초기화
   dismissedPollId = null;
   sessionStorage.removeItem("dismissed_poll_id");
 
   attachPoll(ref.id);
 }
 
+// 인덱스 없이: where('status'=='open')만 사용 → 클라에서 createdAt 내림차순 정렬
 async function getOpenPoll() {
   const qOpen = query(collection(db, "lunch_polls"), where("status", "==", "open"));
   const snap = await getDocs(qOpen);
@@ -91,6 +97,7 @@ async function getOpenPoll() {
   return list[0] || null;
 }
 
+/* ========= 타이머 ========= */
 function startCountdown(expiresAt) {
   stopCountdown();
   function tick() {
@@ -119,15 +126,15 @@ async function expireIfOpen(pollId) {
   }
 }
 
+/* ========= 남은 인원/현황 ========= */
 function updateRemaining(remain) {
   remainSpan.textContent = (remain == null)
     ? "수락까지 남은 인원: —명"
     : `수락까지 남은 인원: ${remain}명`;
 }
 
-// ✅ 수락/거부 현황 렌더
 function renderResponseStats(pollData, responses) {
-  // 수락자
+  // 수락자(현재 활성 메뉴 기준)
   const accepts = responses.filter(r => r.choice === "accept" && r.menu === pollData.activeMenu);
   acceptedBox.innerHTML = "";
   accepts.forEach(r => {
@@ -142,20 +149,22 @@ function renderResponseStats(pollData, responses) {
   rejectedTxt.textContent = `${rejectCount}명이 거부함`;
 }
 
-// 응답 평가 + 남은 인원 집계
+/* ========= 평가(상태 전환: 생성자만 시도) ========= */
 async function evaluatePoll(pollId, pollData, responses) {
   if (pollData.status !== "open") {
     renderResponseStats(pollData, responses);
     return;
   }
 
-  // 활성 메뉴 미선택 시
+  // 활성 메뉴가 없으면 남은 인원 계산 불가
   if (!pollData.activeMenu) {
     updateRemaining(null);
     renderResponseStats(pollData, responses);
-    // 취소가 들어오면 바로 실패
+    // 거부가 들어오면 실패 (생성자만 상태 변경 시도)
     if (responses.some(r => r.choice === "cancel")) {
-      await updateDoc(doc(db, "lunch_polls", pollId), { status: "failed" });
+      if (auth.currentUser?.uid === pollData.creatorUid) {
+        await updateDoc(doc(db, "lunch_polls", pollId), { status: "failed" });
+      }
     }
     return;
   }
@@ -166,22 +175,27 @@ async function evaluatePoll(pollId, pollData, responses) {
   const remain = (pollData.participants || []).filter(uid => !acceptedSet.has(uid)).length;
   updateRemaining(remain);
 
-  // 거부자 있으면 즉시 실패
+  // 거부자 있으면 즉시 실패 (생성자만)
   if (responses.some(r => r.choice === "cancel")) {
-    await updateDoc(doc(db, "lunch_polls", pollId), { status: "failed" });
+    if (auth.currentUser?.uid === pollData.creatorUid) {
+      await updateDoc(doc(db, "lunch_polls", pollId), { status: "failed" });
+    }
     renderResponseStats(pollData, responses);
     return;
   }
 
-  // 전원 수락 시 성공
+  // 전원 수락 시 성공 (생성자만)
   const allAccepted = (pollData.participants || []).every(uid => acceptedSet.has(uid));
   if (allAccepted) {
-    await updateDoc(doc(db, "lunch_polls", pollId), { status: "success" });
+    if (auth.currentUser?.uid === pollData.creatorUid) {
+      await updateDoc(doc(db, "lunch_polls", pollId), { status: "success" });
+    }
   }
 
   renderResponseStats(pollData, responses);
 }
 
+/* ========= 상태 메시지 ========= */
 function renderStatus(text, kind){
   statusWrap.innerHTML = "";
   const msg = document.createElement("div");
@@ -195,6 +209,7 @@ function clearStatus(){
   btnDismiss.classList.add("hidden");
 }
 
+/* ========= 구독/표시 ========= */
 function attachPoll(pollId) {
   detachPoll();
   currentPollId = pollId;
@@ -204,7 +219,7 @@ function attachPoll(pollId) {
     if (!psnap.exists()) { hideBanner(); return; }
     const p = psnap.data();
 
-    // 닫아둔 배너는 계속 숨김
+    // 사용자가 닫은 배너면 표시하지 않음
     if (dismissedPollId === pollId) { hideBanner(); return; }
 
     showBanner(p);
@@ -257,7 +272,10 @@ function showBanner(p){
       b.className = "lunch-btn";
       b.textContent = c;
       b.addEventListener("click", async () => {
-        if (!p.participants?.includes(auth.currentUser.uid)) { alert("참여자만 선택할 수 있습니다."); return; }
+        // 후보 선택은 참가자 또는 생성자만
+        if (!(p.participants?.includes(auth.currentUser.uid) || auth.currentUser?.uid === p.creatorUid)) {
+          alert("참여자만 선택할 수 있습니다."); return;
+        }
         await updateDoc(doc(db, "lunch_polls", currentPollId), { activeMenu: c });
       });
       candWrap.appendChild(b);
@@ -272,7 +290,7 @@ function showBanner(p){
   }
 }
 
-// 응답 버튼(이름 포함 저장)
+/* ========= 사용자 입력 ========= */
 btnAccept.addEventListener("click", async () => {
   if (!currentPollId) return;
   const snap = await getDoc(doc(db,"lunch_polls", currentPollId));
@@ -302,10 +320,14 @@ btnCancel.addEventListener("click", async () => {
     menu: p.activeMenu || null,
     updatedAt: serverTimestamp()
   }, { merge: true });
-  await updateDoc(doc(db, "lunch_polls", currentPollId), { status: "failed" });
+
+  // 상태 전환은 생성자만 시도(권한 에러 방지)
+  if (auth.currentUser?.uid === p.creatorUid) {
+    await updateDoc(doc(db, "lunch_polls", currentPollId), { status: "failed" });
+  }
 });
 
-// 닫기(X) — 이 세션에서는 다시 안 띄움
+// 닫기(X): 이 세션에서는 다시 자동 표시하지 않음
 btnDismiss.addEventListener("click", () => {
   if (currentPollId) {
     dismissedPollId = currentPollId;
@@ -314,7 +336,7 @@ btnDismiss.addEventListener("click", () => {
   hideBanner();
 });
 
-// 최초 진입 시 열려있는 폴이 있고, 내가 닫지 않은 경우만 붙이기
+/* ========= 초기 진입 ========= */
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   startPresence();
@@ -322,5 +344,5 @@ onAuthStateChanged(auth, async (user) => {
   if (open && open.id !== dismissedPollId) attachPoll(open.id);
 });
 
-// 외부에서 호출(채팅 커맨드)
+// 외부에서 호출(채팅 커맨드 훅)
 window.__lunchCreatePollFromText = createPollFromText;
