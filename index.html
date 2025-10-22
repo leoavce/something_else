@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-  <!-- 상단바 -->
   <header class="topbar">
     <div class="brand">Simple Chat</div>
     <div class="auth-area">
@@ -16,23 +15,35 @@
     </div>
   </header>
 
-  <!-- 앱 본문(로그인 후 표시) -->
   <main id="app-root" class="grid hidden">
-    <!-- 채팅 -->
     <section class="panel">
-      <!-- 점심 배너: 채팅 상단 -->
       <div id="lunch-banner" class="lunch-banner hidden">
         <div class="lunch-row">
           <strong id="lunch-title">점심 후보</strong>
           <span id="lunch-timer" class="lunch-timer" title="남은 시간">05:00</span>
         </div>
+
         <div id="lunch-candidates" class="lunch-candidates"></div>
+
         <div id="lunch-cta" class="lunch-cta hidden">
           <span id="lunch-active" class="lunch-active"></span>
           <span id="lunch-remaining" class="lunch-remaining">수락까지 남은 인원: —명</span>
           <button id="btn-lunch-accept" class="btn primary">수락</button>
           <button id="btn-lunch-cancel" class="btn">취소</button>
         </div>
+
+        <!-- ✅ 수락/거부 현황 -->
+        <div class="lunch-progress">
+          <div class="lunch-accepted-wrap">
+            <span class="muted">수락:</span>
+            <div id="lunch-accepted" class="lunch-acceptedlist"></div>
+          </div>
+          <div class="lunch-rejected-wrap">
+            <span class="muted">거부:</span>
+            <span id="lunch-rejected" class="lunch-rejected">0명이 거부함</span>
+          </div>
+        </div>
+
         <div id="lunch-status" class="lunch-status">
           <button id="btn-lunch-dismiss" class="btn small hidden" aria-label="닫기">×</button>
         </div>
@@ -52,14 +63,12 @@
       </div>
     </section>
 
-    <!-- 우측 패널: 탭 -->
     <aside class="panel">
       <div class="tabs">
         <button id="tab-notes"  class="tab active">메모</button>
         <button id="tab-alarms" class="tab">알람</button>
       </div>
 
-      <!-- 메모 영역 -->
       <section id="notes-panel">
         <h2 class="panel-title">내 메모</h2>
         <div class="note-editor">
@@ -73,7 +82,6 @@
         <ul id="note-list" class="note-list"></ul>
       </section>
 
-      <!-- 알람(토스트) 영역 -->
       <section id="alarms-panel" class="hidden">
         <h2 class="panel-title">알람(토스트)</h2>
         <div class="keeper-form">
@@ -94,7 +102,6 @@
         </div>
       </section>
 
-      <!-- 토스트 컨테이너 -->
       <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
     </aside>
   </main>
