@@ -3,6 +3,7 @@ import {
   collection, addDoc, serverTimestamp, onSnapshot, query, where,
   doc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const $ = (id) => document.getElementById(id);
 const titleEl = $("note-title");
@@ -65,7 +66,6 @@ function startNotesSubscription(uid) {
   unsubscribeNotes = onSnapshot(q, (snap) => {
     const items = [];
     snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    // createdAt 기준 최신순(클라 정렬: 인덱스 불필요)
     items.sort((a,b) => (b.createdAt?.toMillis?.()||0) - (a.createdAt?.toMillis?.()||0));
     listEl.innerHTML = "";
     for (const it of items) listEl.appendChild(renderItem(it.id, it));
@@ -74,8 +74,7 @@ function startNotesSubscription(uid) {
   });
 }
 
-// ▶ 로드 즉시 상태 확인 + 변화 감지 둘 다 처리
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+// 언제 로드돼도 구독이 붙도록
 onAuthStateChanged(auth, (user) => {
   if (user) startNotesSubscription(user.uid);
   else {
@@ -83,6 +82,4 @@ onAuthStateChanged(auth, (user) => {
     listEl.innerHTML = "";
   }
 });
-
-// 혹시 auth_gate보다 먼저 불렸을 때 대비
 if (auth.currentUser) startNotesSubscription(auth.currentUser.uid);
