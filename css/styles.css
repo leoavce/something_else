@@ -14,6 +14,7 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .btn{padding:8px 12px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 .btn.block{display:block;width:100%;}
+.btn.small{padding:6px 8px;font-size:12px}
 
 /* 그리드 */
 .grid{display:grid;grid-template-columns:1fr 360px;gap:16px;max-width:1100px;margin:16px auto;padding:0 12px;}
@@ -23,7 +24,7 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:400px;}
 .panel-title{margin:4px 4px 12px;font-size:16px;font-weight:700}
 
-/* 채팅 리스트(겹침 방지) */
+/* 채팅 */
 .messages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto;}
 .row{display:flex;align-items:flex-end;gap:8px;flex-wrap:nowrap;}
 .me{justify-content:flex-end;}
@@ -38,6 +39,7 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 /* 입력 줄 */
 .inputbar{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px;}
 .nick-input,.msg-input,.input,.note-title,.note-body{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;}
+.input.small{padding:8px 10px}
 .label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px;}
 
 /* 메모 */
@@ -48,39 +50,47 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .note-title-text{font-weight:700;margin:0 0 6px;}
 .note-body-text{margin:0;white-space:pre-wrap;word-break:break-word;}
 .note-buttons{display:flex;gap:8px;margin-top:8px;}
-.btn.small{padding:6px 8px;font-size:12px}
 
-/* auth.html */
-.auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;}
-.auth-card{width:min(420px,92vw);background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;}
-.auth-title{margin:4px 0 4px;font-size:20px;font-weight:800;}
-.auth-sub{margin:0 0 16px;color:var(--muted);}
-.auth-form{display:flex;flex-direction:column;gap:8px;}
-.auth-actions{display:flex;gap:8px;margin-top:6px;}
-.auth-msg{min-height:18px;font-size:12px;color:#b91c1c;}
+/* 탭 */
+.tabs{display:flex;gap:8px;margin-bottom:8px;}
+.tab{padding:8px 12px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;font-weight:600}
+.tab.active{background:#eef2ff;border-color:#c7d2fe}
+
+/* 알람 UI */
+.keeper-form{display:flex;flex-direction:column;gap:8px}
+.keeper-row{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center}
+.keeper-actions{display:flex;gap:8px;margin-top:4px}
+.keeper-ticker{color:var(--muted);font-size:12px;margin-top:4px}
+.keeper-hint{color:var(--muted);font-size:12px;margin:6px 0 0}
 
 /* Lunch banner */
 .lunch-banner{border:1px dashed var(--border);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff}
 .lunch-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .lunch-timer{
   font-weight:800;color:#dc2626;
-  font-size:12px; /* ⏱ 작게 */
+  font-size:12px; /* small */
   padding:2px 6px;border:1px solid #fecaca;border-radius:9999px;background:#fff1f2;
 }
 .lunch-candidates{display:flex;flex-wrap:wrap;gap:8px}
 .lunch-cta{display:flex;gap:8px;align-items:center;margin-top:8px}
 .lunch-active{font-weight:700}
-.lunch-status{margin-top:8px;font-weight:600}
+.lunch-remaining{font-size:12px;color:var(--muted);margin-left:8px}
+.lunch-status{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600}
 .lunch-btn{padding:6px 10px;border:1px solid var(--border);background:#f8fafc;border-radius:9999px;cursor:pointer}
 .lunch-btn:hover{background:#eef2ff}
-.lunch-remaining{font-size:12px;color:var(--muted);margin-left:8px}
-.lunch-status{display:flex;align-items:center;gap:8px;margin-top:8px}
 .lunch-alert{padding:6px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:#f8fafc}
 .lunch-alert.success{background:#ecfeff;border-color:#a5f3fc}
 .lunch-alert.failed{background:#fff1f2;border-color:#fecaca}
 .lunch-alert.expired{background:#fefce8;border-color:#fde68a}
 
-/* 간단 폭죽(컨페티) */
+/* 토스트 */
+.toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50}
+.toast{min-width:240px;max-width:320px;background:#111;color:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast h4{margin:0 0 4px;font-size:14px}
+.toast p{margin:0;font-size:12px;color:#e5e7eb}
+.toast .close{position:absolute;right:8px;top:6px;background:transparent;color:#fff;border:none;font-size:16px;cursor:pointer}
+
+/* 컨페티 */
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .confetti i{position:absolute;width:8px;height:14px;opacity:.9;animation:fall 1200ms linear forwards}
 @keyframes fall{ to{transform:translateY(100vh) rotate(720deg);opacity:0} }
