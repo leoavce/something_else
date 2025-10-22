@@ -25,19 +25,18 @@
         <div class="lunch-row">
           <strong id="lunch-title">점심 후보</strong>
           <span id="lunch-timer" class="lunch-timer" title="남은 시간">05:00</span>
+        </div>
+        <div id="lunch-candidates" class="lunch-candidates"></div>
+        <div id="lunch-cta" class="lunch-cta hidden">
+          <span id="lunch-active" class="lunch-active"></span>
+          <span id="lunch-remaining" class="lunch-remaining">수락까지 남은 인원: —명</span>
+          <button id="btn-lunch-accept" class="btn primary">수락</button>
+          <button id="btn-lunch-cancel" class="btn">취소</button>
+        </div>
+        <div id="lunch-status" class="lunch-status">
+          <button id="btn-lunch-dismiss" class="btn small hidden" aria-label="닫기">×</button>
+        </div>
       </div>
-      <div id="lunch-candidates" class="lunch-candidates"></div>
-      <div id="lunch-cta" class="lunch-cta hidden">
-        <span id="lunch-active" class="lunch-active"></span>
-        <span id="lunch-remaining" class="lunch-remaining">수락까지 남은 인원: —명</span>
-        <button id="btn-lunch-accept" class="btn primary">수락</button>
-        <button id="btn-lunch-cancel" class="btn">취소</button>
-      </div>
-      <div id="lunch-status" class="lunch-status">
-        <!-- 메시지/알림 들어오는 자리 -->
-        <button id="btn-lunch-dismiss" class="btn small hidden" aria-label="닫기">×</button>
-      </div>
-    </div>
 
       <h2 class="panel-title">채팅방</h2>
       <ul id="messages" class="messages" aria-live="polite"></ul>
@@ -53,20 +52,50 @@
       </div>
     </section>
 
-    <!-- 메모 -->
+    <!-- 우측 패널: 탭 -->
     <aside class="panel">
-      <h2 class="panel-title">내 메모</h2>
-
-      <div class="note-editor">
-        <input id="note-title" class="note-title" placeholder="제목" maxlength="100" />
-        <textarea id="note-body" class="note-body" rows="5" placeholder="내용"></textarea>
-        <div class="note-actions">
-          <button id="btn-note-save" class="btn primary">추가</button>
-          <button id="btn-note-clear" class="btn">지우기</button>
-        </div>
+      <div class="tabs">
+        <button id="tab-notes"  class="tab active">메모</button>
+        <button id="tab-alarms" class="tab">알람</button>
       </div>
 
-      <ul id="note-list" class="note-list"></ul>
+      <!-- 메모 영역 -->
+      <section id="notes-panel">
+        <h2 class="panel-title">내 메모</h2>
+        <div class="note-editor">
+          <input id="note-title" class="note-title" placeholder="제목" maxlength="100" />
+          <textarea id="note-body" class="note-body" rows="5" placeholder="내용"></textarea>
+          <div class="note-actions">
+            <button id="btn-note-save" class="btn primary">추가</button>
+            <button id="btn-note-clear" class="btn">지우기</button>
+          </div>
+        </div>
+        <ul id="note-list" class="note-list"></ul>
+      </section>
+
+      <!-- 알람(토스트) 영역 -->
+      <section id="alarms-panel" class="hidden">
+        <h2 class="panel-title">알람(토스트)</h2>
+        <div class="keeper-form">
+          <div class="keeper-row">
+            <label class="label" for="eyeMins">눈 휴식 간격(분)</label>
+            <input id="eyeMins" class="input small" type="number" min="1" value="20" />
+          </div>
+          <div class="keeper-row">
+            <label class="label" for="stretchMins">스트레칭 간격(분)</label>
+            <input id="stretchMins" class="input small" type="number" min="1" value="60" />
+          </div>
+          <div class="keeper-actions">
+            <button id="btnStart" class="btn primary">시작</button>
+            <button id="btnStop"  class="btn">정지</button>
+          </div>
+          <div id="ticker" class="keeper-ticker">대기 중…</div>
+          <p class="keeper-hint">브라우저 알림 권한을 허용하면 시스템 알림도 함께 표시됩니다.</p>
+        </div>
+      </section>
+
+      <!-- 토스트 컨테이너 -->
+      <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
     </aside>
   </main>
 
@@ -75,5 +104,6 @@
   <script type="module" src="./js/lunch.js"></script>
   <script type="module" src="./js/chat.js"></script>
   <script type="module" src="./js/notes.js"></script>
+  <script type="module" src="./js/keeper.js"></script>
 </body>
 </html>
