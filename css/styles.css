@@ -73,6 +73,12 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Ro
 .lunch-status{margin-top:8px;font-weight:600}
 .lunch-btn{padding:6px 10px;border:1px solid var(--border);background:#f8fafc;border-radius:9999px;cursor:pointer}
 .lunch-btn:hover{background:#eef2ff}
+.lunch-remaining{font-size:12px;color:var(--muted);margin-left:8px}
+.lunch-status{display:flex;align-items:center;gap:8px;margin-top:8px}
+.lunch-alert{padding:6px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:#f8fafc}
+.lunch-alert.success{background:#ecfeff;border-color:#a5f3fc}
+.lunch-alert.failed{background:#fff1f2;border-color:#fecaca}
+.lunch-alert.expired{background:#fefce8;border-color:#fde68a}
 
 /* 간단 폭죽(컨페티) */
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden}
