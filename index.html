@@ -25,15 +25,19 @@
         <div class="lunch-row">
           <strong id="lunch-title">점심 후보</strong>
           <span id="lunch-timer" class="lunch-timer" title="남은 시간">05:00</span>
-        </div>
-        <div id="lunch-candidates" class="lunch-candidates"></div>
-        <div id="lunch-cta" class="lunch-cta hidden">
-          <span id="lunch-active" class="lunch-active"></span>
-          <button id="btn-lunch-accept" class="btn primary">수락</button>
-          <button id="btn-lunch-cancel" class="btn">취소</button>
-        </div>
-        <div id="lunch-status" class="lunch-status"></div>
       </div>
+      <div id="lunch-candidates" class="lunch-candidates"></div>
+      <div id="lunch-cta" class="lunch-cta hidden">
+        <span id="lunch-active" class="lunch-active"></span>
+        <span id="lunch-remaining" class="lunch-remaining">수락까지 남은 인원: —명</span>
+        <button id="btn-lunch-accept" class="btn primary">수락</button>
+        <button id="btn-lunch-cancel" class="btn">취소</button>
+      </div>
+      <div id="lunch-status" class="lunch-status">
+        <!-- 메시지/알림 들어오는 자리 -->
+        <button id="btn-lunch-dismiss" class="btn small hidden" aria-label="닫기">×</button>
+      </div>
+    </div>
 
       <h2 class="panel-title">채팅방</h2>
       <ul id="messages" class="messages" aria-live="polite"></ul>
